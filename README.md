@@ -437,6 +437,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Your Name**
 - GitHub: [@bekimzeqiri](https://github.com/bekimzeqiri)
 - Email: 12bekim21@gmail.com
+- GitHub: [@albanbexheti](https://github.com/albanbexheti)
+- Email: Alban.Bexheti@gmail.com
 
 ## 🙏 Acknowledgments
 
