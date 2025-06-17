@@ -1,14 +1,17 @@
 from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional
 
 class LeaderboardEntry(BaseModel):
-    player_id: int
-    player_name: str
-    best_score: int
     rank: int
-    game_mode: str
+    player_id: int
+    display_name: str
+    username: str
+    best_score: int
+    total_games: int
+    avg_score: float
 
 class PlayerRank(BaseModel):
-    player_id: int
-    rank: Optional[int]
-    game_mode: str
+    rank: int
+    total_players: int
+    best_score: int

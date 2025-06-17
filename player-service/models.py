@@ -4,18 +4,19 @@ from typing import Optional
 
 class PlayerCreate(BaseModel):
     username: str
-    email: EmailStr
+    email: str
     display_name: Optional[str] = None
 
 class PlayerUpdate(BaseModel):
-    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
     display_name: Optional[str] = None
 
 class PlayerResponse(BaseModel):
     id: int
     username: str
     email: str
-    display_name: Optional[str]
+    display_name: Optional[str] = None
     created_at: datetime
     last_active: datetime
     

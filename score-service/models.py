@@ -1,11 +1,13 @@
-from pydantic import BaseModel, Field
+# Create this file: score-service/models.py
+
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
 class ScoreCreate(BaseModel):
-    player_id: int = Field(..., description="ID of the player")
-    game_mode: str = Field(default="CLASSIC", description="Game mode (CLASSIC, ARCADE, etc.)")
-    score: int = Field(..., ge=0, description="Score value (must be positive)")
+    player_id: int
+    game_mode: str = "CLASSIC"
+    score: int
 
 class ScoreResponse(BaseModel):
     id: int
@@ -16,8 +18,3 @@ class ScoreResponse(BaseModel):
     
     class Config:
         from_attributes = True
-
-class PlayerBestScore(BaseModel):
-    player_id: int
-    game_mode: str
-    best_score: int

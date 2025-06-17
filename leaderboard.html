@@ -3,455 +3,838 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gaming Leaderboard</title>
+    <title>🎮 Gaming Leaderboard System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-20px) scale(1.05); }
+        .floating-orb {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            animation: float 6s ease-in-out infinite;
         }
-        .float-animation { animation: float 6s ease-in-out infinite; }
-        .glow { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
-        body { overflow-x: hidden; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .achievement-unlock {
+            animation: slideInRight 0.8s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.6); }
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .achievement-badge {
+            transition: all 0.3s ease;
+        }
+        
+        .achievement-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Simple dropdown styling - white background with colored selection */
+select {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* White background for dropdown options */
+select option {
+    background-color: white !important;
+    color: #2d3748 !important; /* Dark text on white background */
+    padding: 8px 12px;
+}
+
+/* Hover state - light blue background */
+select option:hover {
+    background-color: #2b5781 !important; /* Light blue */
+    color: #2d3748 !important;
+}
+
+/* For better cross-browser support */
+select:focus {
+    outline: 2px solid rgba(102, 126, 234, 0.5);
+    outline-offset: 2px;
+}
+        
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white">
-    <!-- Animated Background -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl float-animation"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl float-animation" style="animation-delay: 2s;"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl float-animation" style="animation-delay: 4s;"></div>
-    </div>
+<body class="font-sans">
+    <!-- Floating orbs -->
+    <div class="floating-orb w-16 h-16 top-10 left-10 opacity-20"></div>
+    <div class="floating-orb w-12 h-12 top-32 right-20 opacity-30" style="animation-delay: -2s;"></div>
+    <div class="floating-orb w-20 h-20 bottom-20 left-1/4 opacity-15" style="animation-delay: -4s;"></div>
 
-    <div class="relative z-10">
+    <!-- Achievement Notification Area -->
+    <div id="achievement-notifications" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"></div>
+
+    <div class="container mx-auto px-4 py-8">
         <!-- Header -->
-        <header class="bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-gradient-to-r from-purple-500 to-cyan-500 p-3 rounded-xl">
-                            <span class="text-2xl">🏆</span>
-                        </div>
-                        <div>
-                            <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                                Gaming Leaderboard
-                            </h1>
-                            <p class="text-slate-400">Track your gaming achievements</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <div class="flex bg-slate-800/80 rounded-lg p-1">
-                            <button id="leaderboard-tab" class="tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25">
-                                🏆 Leaderboard
-                            </button>
-                            <button id="players-tab" class="tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50">
-                                👥 Players
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-bold text-white mb-4 drop-shadow-lg">
+                🎮 Gaming Leaderboard
+            </h1>
+            <div class="mt-4">
+                <span id="cache-status" class="text-sm text-white/60">⚡ Cached data loaded</span>
             </div>
-        </header>
+        </div>
 
-        <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Error Message -->
-            <div id="error-message" class="hidden mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                <p class="text-red-400" id="error-text"></p>
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center mb-8">
+            <div class="glass rounded-2xl p-2">
+                <button onclick="showTab('leaderboard')" id="tab-leaderboard" 
+                    class="tab-button px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 bg-white/20">
+                    🏆 Leaderboard
+                </button>
+                <button onclick="showTab('players')" id="tab-players" 
+                    class="tab-button px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10">
+                    👥 Players
+                </button>
+                <button onclick="showTab('achievements')" id="tab-achievements" 
+                    class="tab-button px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10">
+                    🏅 Achievements
+                </button>
+                <button onclick="showTab('stats')" id="tab-stats" 
+                    class="tab-button px-6 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10">
+                    📊 Stats
+                </button>
             </div>
+        </div>
 
-            <!-- Loading Spinner -->
-            <div id="loading" class="hidden flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-            </div>
-
-            <!-- Leaderboard Section -->
-            <div id="leaderboard-section" class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <h2 class="text-2xl font-bold">🏆 Leaderboard</h2>
-                        <select id="game-mode" class="bg-slate-800/80 border border-slate-600/50 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="GLOBAL">🌍 Global</option>
+        <!-- Leaderboard Tab -->
+        <div id="leaderboard-tab" class="tab-content">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Left Panel - Controls -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Game Mode Selection -->
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-4">🎯 Game Mode</h3>
+                        <select id="gameModeSelect" onchange="loadLeaderboard()" 
+                            class="w-full p-3 rounded-xl bg-white/20 text-white border-none outline-none">
+                            <option value="">🌍 Global</option>
                             <option value="CLASSIC">🎮 Classic</option>
                             <option value="ARCADE">🕹️ Arcade</option>
+                            <option value="TOURNAMENT">🏆 Tournament</option>
                         </select>
                     </div>
-                    
-                    <button id="add-score-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 glow">
-                        ➕ Submit Score
-                    </button>
+
+                    <!-- Submit Score -->
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-4">➕ Submit Score</h3>
+                        <form onsubmit="submitScore(event)">
+                            <select id="playerSelect" required 
+                                class="w-full p-3 rounded-xl bg-white/20 text-white border-none outline-none mb-4">
+                                <option value="">Select Player</option>
+                            </select>
+                            <select id="scoreGameMode" 
+                                class="w-full p-3 rounded-xl bg-white/20 text-white border-none outline-none mb-4">
+                                <option value="CLASSIC">🎮 Classic</option>
+                                <option value="ARCADE">🕹️ Arcade</option>
+                                <option value="TOURNAMENT">🏆 Tournament</option>
+                            </select>
+                            <input type="number" id="scoreInput" placeholder="Enter your score" required 
+                                class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border-none outline-none mb-4">
+                            <button type="submit" 
+                                class="w-full bg-gradient-to-r from-pink-500 to-violet-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-pink-600 hover:to-violet-600 transition-all duration-300 transform hover:scale-105">
+                                🚀 Submit Score
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Achievements -->
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-4">🏅 Recent Achievements</h3>
+                        <div id="recentAchievements" class="space-y-2">
+                            <!-- Recent achievements will load here -->
+                        </div>
+                    </div>
                 </div>
 
-                <div id="leaderboard-list" class="space-y-3">
-                    <!-- Leaderboard entries will be populated here -->
-                </div>
-            </div>
-
-            <!-- Players Section -->
-            <div id="players-section" class="hidden space-y-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-bold">👥 Players</h2>
-                    <button id="add-player-btn" class="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 glow">
-                        ➕ Add Player
-                    </button>
-                </div>
-
-                <div id="players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Players will be populated here -->
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Add Player Modal -->
-    <div id="add-player-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-700">
-            <h3 class="text-xl font-bold mb-4">Add New Player</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Username</label>
-                    <input type="text" id="player-username" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                    <input type="email" id="player-email" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Display Name</label>
-                    <input type="text" id="player-display-name" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                </div>
-                <div class="flex space-x-3 pt-4">
-                    <button id="create-player-btn" class="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 py-2 rounded-lg font-medium transition-all duration-300">
-                        Create Player
-                    </button>
-                    <button id="cancel-player-btn" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg font-medium transition-all duration-300">
-                        Cancel
-                    </button>
+                <!-- Right Panel - Leaderboard -->
+                <div class="lg:col-span-2">
+                    <div class="glass rounded-2xl p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-2xl font-bold text-white">🏆 Current Rankings</h3>
+                            <div class="flex items-center space-x-2 text-white/60 text-sm">
+                                <span id="refresh-indicator">⚡</span>
+                                <span>Auto-refresh: 30s</span>
+                            </div>
+                        </div>
+                        <div id="leaderboard" class="space-y-3">
+                            <!-- Leaderboard entries will be loaded here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Submit Score Modal -->
-    <div id="add-score-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-700">
-            <h3 class="text-xl font-bold mb-4">Submit Score</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Player</label>
-                    <select id="score-player" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
-                        <option value="">Select a player</option>
+        <!-- Players Tab -->
+        <div id="players-tab" class="tab-content hidden">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Add Player Form -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-white mb-6">➕ Add New Player</h3>
+                    <form onsubmit="addPlayer(event)">
+                        <input type="text" id="username" placeholder="Username" required 
+                            class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border-none outline-none mb-4">
+                        <input type="email" id="email" placeholder="Email" required 
+                            class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border-none outline-none mb-4">
+                        <input type="text" id="displayName" placeholder="Display Name" 
+                            class="w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border-none outline-none mb-4">
+                        <button type="submit" 
+                            class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105">
+                            👤 Add Player
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Players List -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-white mb-6">👥 All Players</h3>
+                    <div id="playersList" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Players will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Tab -->
+        <div id="achievements-tab" class="tab-content hidden">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- All Achievements -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-white mb-6">🏅 All Achievements</h3>
+                    <div class="mb-4">
+                        <div class="flex space-x-2 text-sm">
+                            <button onclick="filterAchievements('all')" id="filter-all" class="px-3 py-1 rounded-lg bg-white/20 text-white">All</button>
+                            <button onclick="filterAchievements('BEGINNER')" id="filter-BEGINNER" class="px-3 py-1 rounded-lg text-white/70 hover:bg-white/10">Beginner</button>
+                            <button onclick="filterAchievements('SCORE')" id="filter-SCORE" class="px-3 py-1 rounded-lg text-white/70 hover:bg-white/10">Score</button>
+                            <button onclick="filterAchievements('PERSISTENCE')" id="filter-PERSISTENCE" class="px-3 py-1 rounded-lg text-white/70 hover:bg-white/10">Persistence</button>
+                        </div>
+                    </div>
+                    <div id="allAchievements" class="space-y-4 max-h-96 overflow-y-auto">
+                        <!-- All achievements will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Player Achievement Progress -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-white mb-4">🎯 Player Progress</h3>
+                    <select id="achievementPlayerSelect" onchange="loadPlayerAchievements()" 
+                        class="w-full p-3 rounded-xl bg-white/20 text-white border-none outline-none mb-6">
+                        <option value="">Select Player</option>
                     </select>
+                    <div id="playerAchievementStats" class="mb-4 text-white/80 text-sm">
+                        <!-- Achievement stats will show here -->
+                    </div>
+                    <div id="playerAchievements" class="space-y-3 max-h-80 overflow-y-auto">
+                        <!-- Player achievements will be loaded here -->
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Game Mode</label>
-                    <select id="score-game-mode" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        <option value="CLASSIC">🎮 Classic</option>
-                        <option value="ARCADE">🕹️ Arcade</option>
-                    </select>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats-tab" class="tab-content hidden">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Achievement Leaderboard -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-2xl font-bold text-white mb-6">🏆 Achievement Champions</h3>
+                    <div id="achievementLeaderboard" class="space-y-3">
+                        <!-- Achievement leaderboard will be loaded here -->
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Score</label>
-                    <input type="number" id="score-value" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required min="0">
-                </div>
-                <div class="flex space-x-3 pt-4">
-                    <button id="submit-score-btn" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 py-2 rounded-lg font-medium transition-all duration-300">
-                        Submit Score
-                    </button>
-                    <button id="cancel-score-btn" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg font-medium transition-all duration-300">
-                        Cancel
-                    </button>
+
+                <!-- Recent Activity & System Stats -->
+                <div class="space-y-6">
+                    <!-- Recent Activity -->
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-6">⚡ Recent Scores</h3>
+                        <div id="recentActivity" class="space-y-3 max-h-64 overflow-y-auto">
+                            <!-- Recent activity will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- System Performance -->
+                    <div class="glass rounded-2xl p-6">
+                        <h3 class="text-2xl font-bold text-white mb-6">⚙️ System Performance</h3>
+                        <div id="systemStats" class="space-y-3 text-white/80">
+                            <!-- System stats will show here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8000';
-        let currentTab = 'leaderboard';
-        let currentGameMode = 'GLOBAL';
-        let players = [];
+        const API_BASE = 'http://localhost:8000/api';
+let refreshInterval;
+let allAchievements = [];
+let currentFilter = 'all';
 
-        // Utility functions
-        function showError(message) {
-            document.getElementById('error-text').textContent = message;
-            document.getElementById('error-message').classList.remove('hidden');
+// Enhanced request function with better error handling
+async function makeRequest(url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            mode: 'cors'
+        });
+        
+        if (!response.ok) {
+            let errorMessage;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.detail || `HTTP ${response.status}`;
+            } catch {
+                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        return response;
+    } catch (error) {
+        console.error('Request failed:', error);
+        throw error;
+    }
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    loadPlayers();
+    loadLeaderboard();
+    loadAchievements();
+    loadAchievementLeaderboard();
+    loadRecentActivity();
+    loadSystemStats();
+    startAutoRefresh();
+});
+
+// Tab switching functionality
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active state from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('bg-white/20');
+        btn.classList.add('hover:bg-white/10');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Activate selected button
+    const activeBtn = document.getElementById('tab-' + tabName);
+    activeBtn.classList.add('bg-white/20');
+    activeBtn.classList.remove('hover:bg-white/10');
+
+    // Load tab-specific data
+    if (tabName === 'achievements') {
+        loadAchievements();
+    } else if (tabName === 'stats') {
+        loadAchievementLeaderboard();
+        loadRecentActivity();
+        loadSystemStats();
+    }
+}
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+    refreshInterval = setInterval(() => {
+        animateRefreshIndicator();
+        loadLeaderboard();
+        loadRecentActivity();
+        loadSystemStats();
+    }, 30000); // Refresh every 30 seconds
+}
+
+function animateRefreshIndicator() {
+    const indicator = document.getElementById('refresh-indicator');
+    if (indicator) {
+        indicator.style.animation = 'none';
+        indicator.offsetHeight; // Trigger reflow
+        indicator.style.animation = 'float 1s ease-in-out';
+    }
+}
+
+// Load and display leaderboard
+async function loadLeaderboard() {
+    try {
+        updateCacheStatus('Loading leaderboard...');
+        const gameMode = document.getElementById('gameModeSelect').value;
+        const url = gameMode ? 
+            `${API_BASE}/leaderboard/gamemode/${gameMode}?limit=10` : 
+            `${API_BASE}/leaderboard/global?limit=10`;
+        
+        const response = await makeRequest(url);
+        const data = await response.json();
+        
+        const leaderboardHtml = data.map(entry => `
+            <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 transform hover:scale-102">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-full ${getRankColor(entry.rank)} flex items-center justify-center font-bold text-white ${entry.rank <= 3 ? 'pulse-glow' : ''}">
+                        ${entry.rank <= 3 ? getRankEmoji(entry.rank) : entry.rank}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-white text-lg">${entry.display_name || entry.username}</div>
+                        <div class="text-sm text-white/70">${entry.total_games} games • avg: ${entry.avg_score}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-bold text-white">${entry.best_score.toLocaleString()}</div>
+                    <div class="text-sm text-white/70">best score</div>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('leaderboard').innerHTML = leaderboardHtml;
+        updateCacheStatus('⚡ Cached data loaded');
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        updateCacheStatus('❌ Error loading data');
+        document.getElementById('leaderboard').innerHTML = '<p class="text-red-400 text-center p-4">Error loading leaderboard</p>';
+    }
+}
+
+// Helper functions for ranks
+function getRankColor(rank) {
+    if (rank === 1) return 'bg-gradient-to-r from-yellow-400 to-yellow-600';
+    if (rank === 2) return 'bg-gradient-to-r from-gray-300 to-gray-500';
+    if (rank === 3) return 'bg-gradient-to-r from-amber-500 to-amber-700';
+    return 'bg-gradient-to-r from-blue-500 to-blue-700';
+}
+
+function getRankEmoji(rank) {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return rank;
+}
+
+// Load players
+async function loadPlayers() {
+    try {
+        const response = await makeRequest(`${API_BASE}/players`);
+        const players = await response.json();
+        
+        const playerSelect = document.getElementById('playerSelect');
+        const achievementPlayerSelect = document.getElementById('achievementPlayerSelect');
+        
+        const options = players.map(player => 
+            `<option value="${player.id}">${player.display_name || player.username}</option>`
+        ).join('');
+        
+        playerSelect.innerHTML = '<option value="">Select Player</option>' + options;
+        achievementPlayerSelect.innerHTML = '<option value="">Select Player</option>' + options;
+        
+        // Display players list
+        const playersHtml = players.map(player => `
+            <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300">
+                <div>
+                    <div class="font-semibold text-white">${player.display_name || player.username}</div>
+                    <div class="text-sm text-white/70">${player.email}</div>
+                </div>
+                <div class="text-right text-sm text-white/70">
+                    <div>Joined ${new Date(player.created_at).toLocaleDateString()}</div>
+                    <div>ID: ${player.id}</div>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('playersList').innerHTML = playersHtml;
+    } catch (error) {
+        console.error('Error loading players:', error);
+        showNotification('Error loading players', 'error');
+    }
+}
+
+// Add new player - FIXED VERSION
+async function addPlayer(event) {
+    event.preventDefault();
+    
+    const formData = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        display_name: document.getElementById('displayName').value
+    };
+    
+    try {
+        const response = await makeRequest(`${API_BASE}/players`, {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        });
+        
+        showNotification('Player added successfully! 🎉', 'success');
+        document.querySelector('#players-tab form').reset();
+        loadPlayers();
+        
+    } catch (error) {
+        showNotification('Error adding player: ' + error.message, 'error');
+        console.error('Error adding player:', error);
+    }
+}
+
+// Submit score - FIXED VERSION
+async function submitScore(event) {
+    event.preventDefault();
+    
+    const scoreData = {
+        player_id: parseInt(document.getElementById('playerSelect').value),
+        game_mode: document.getElementById('scoreGameMode').value,
+        score: parseInt(document.getElementById('scoreInput').value)
+    };
+    
+    try {
+        const response = await makeRequest(`${API_BASE}/scores`, {
+            method: 'POST',
+            body: JSON.stringify(scoreData)
+        });
+        
+        showNotification('Score submitted successfully! 🚀', 'success');
+        document.querySelector('#leaderboard-tab form').reset();
+        loadLeaderboard();
+        loadRecentActivity();
+        
+        // Check for achievement notifications after a delay
+        setTimeout(() => {
+            checkForNewAchievements(scoreData.player_id);
+        }, 2000);
+        
+    } catch (error) {
+        showNotification('Error submitting score: ' + error.message, 'error');
+        console.error('Error submitting score:', error);
+    }
+}
+
+// Load achievements
+async function loadAchievements() {
+    try {
+        const response = await makeRequest(`${API_BASE}/achievements`);
+        allAchievements = await response.json();
+        displayAchievements();
+    } catch (error) {
+        console.error('Error loading achievements:', error);
+        showNotification('Error loading achievements', 'error');
+    }
+}
+
+function displayAchievements() {
+    const filteredAchievements = currentFilter === 'all' ? 
+        allAchievements : 
+        allAchievements.filter(ach => ach.category === currentFilter);
+
+    const achievementsHtml = filteredAchievements.map(achievement => `
+        <div class="achievement-badge p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300">
+            <div class="flex items-center space-x-3">
+                <div class="text-2xl">${achievement.icon}</div>
+                <div class="flex-1">
+                    <div class="font-semibold text-white">${achievement.name}</div>
+                    <div class="text-sm text-white/70">${achievement.description}</div>
+                    <div class="flex items-center space-x-2 mt-2">
+                        <span class="px-2 py-1 rounded-full bg-white/20 text-xs text-white">${achievement.category}</span>
+                        <span class="text-yellow-400 text-sm">⭐ ${achievement.points} pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('allAchievements').innerHTML = achievementsHtml;
+}
+
+function filterAchievements(category) {
+    currentFilter = category;
+    
+    // Update filter buttons
+    document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+        btn.classList.remove('bg-white/20');
+        btn.classList.add('text-white/70', 'hover:bg-white/10');
+    });
+    
+    document.getElementById(`filter-${category}`).classList.add('bg-white/20');
+    document.getElementById(`filter-${category}`).classList.remove('text-white/70', 'hover:bg-white/10');
+    
+    displayAchievements();
+}
+
+// Load player achievements
+async function loadPlayerAchievements() {
+    const playerId = document.getElementById('achievementPlayerSelect').value;
+    if (!playerId) {
+        document.getElementById('playerAchievements').innerHTML = '<p class="text-white/70">Select a player to view achievements</p>';
+        document.getElementById('playerAchievementStats').innerHTML = '';
+        return;
+    }
+
+    try {
+        const response = await makeRequest(`${API_BASE}/achievements/player/${playerId}`);
+        const playerAchievements = await response.json();
+
+        // Calculate stats
+        const totalPoints = playerAchievements.reduce((sum, ach) => sum + ach.achievement_points, 0);
+
+        // Display stats
+        document.getElementById('playerAchievementStats').innerHTML = `
+            <div class="grid grid-cols-2 gap-4">
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <div class="text-2xl font-bold text-yellow-400">${playerAchievements.length}</div>
+                    <div class="text-sm">Achievements</div>
+                </div>
+                <div class="text-center p-3 bg-white/10 rounded-lg">
+                    <div class="text-2xl font-bold text-green-400">${totalPoints}</div>
+                    <div class="text-sm">Total Points</div>
+                </div>
+            </div>
+        `;
+
+        // Display achievements
+        const achievementsHtml = playerAchievements.map(achievement => `
+            <div class="achievement-badge p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl border border-green-400/30">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">${achievement.achievement_icon}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-white">${achievement.achievement_name}</div>
+                        <div class="text-sm text-white/70">${achievement.achievement_description}</div>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <span class="text-yellow-400 text-sm">⭐ ${achievement.achievement_points} pts</span>
+                            <span class="text-xs text-white/60">Unlocked ${new Date(achievement.unlocked_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('playerAchievements').innerHTML = achievementsHtml || '<p class="text-white/70">No achievements yet. Keep playing!</p>';
+    } catch (error) {
+        console.error('Error loading player achievements:', error);
+        showNotification('Error loading player achievements', 'error');
+    }
+}
+
+// Load achievement leaderboard
+async function loadAchievementLeaderboard() {
+    try {
+        const response = await makeRequest(`${API_BASE}/achievements/leaderboard?limit=10`);
+        const data = await response.json();
+
+        const leaderboardHtml = data.map(entry => `
+            <div class="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300">
+                <div class="flex items-center space-x-4">
+                    <div class="w-8 h-8 rounded-full ${getRankColor(entry.rank)} flex items-center justify-center font-bold text-white text-sm">
+                        ${entry.rank}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-white">${entry.display_name}</div>
+                        <div class="text-sm text-white/70">${entry.achievement_count} achievements</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xl font-bold text-yellow-400">${entry.total_points}</div>
+                    <div class="text-xs text-white/70">points</div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('achievementLeaderboard').innerHTML = leaderboardHtml;
+    } catch (error) {
+        console.error('Error loading achievement leaderboard:', error);
+    }
+}
+
+// Load recent activity
+async function loadRecentActivity() {
+    try {
+        const response = await makeRequest(`${API_BASE}/leaderboard/recent?limit=15`);
+        const data = await response.json();
+
+        const activityHtml = data.map(activity => `
+            <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300">
+                <div>
+                    <div class="font-semibold text-white text-sm">${activity.display_name}</div>
+                    <div class="text-xs text-white/70">${activity.game_mode} • ${new Date(activity.created_at).toLocaleTimeString()}</div>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-white">${activity.score.toLocaleString()}</div>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('recentActivity').innerHTML = activityHtml;
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+    }
+}
+
+// Load system stats
+// Load system stats - FIXED VERSION
+async function loadSystemStats() {
+    try {
+        // Fix: Use correct health endpoint URL
+        const response = await makeRequest(`http://localhost:8000/health`);
+        const healthData = await response.json();
+
+        const statsHtml = `
+            <div class="space-y-3">
+                <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                    <span>Gateway Status</span>
+                    <span class="text-green-400">✅ ${healthData.gateway}</span>
+                </div>
+                ${Object.entries(healthData.services || {}).map(([service, status]) => `
+                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                        <span>${service.charAt(0).toUpperCase() + service.slice(1)} Service</span>
+                        <span class="text-${status.status === 'healthy' ? 'green' : 'red'}-400">
+                            ${status.status === 'healthy' ? '✅' : '❌'} ${status.status}
+                        </span>
+                    </div>
+                `).join('')}
+                <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                    <span>Redis Cache</span>
+                    <span class="text-green-400">⚡ Active</span>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('systemStats').innerHTML = statsHtml;
+    } catch (error) {
+        console.error('Error loading system stats:', error);
+        document.getElementById('systemStats').innerHTML = `
+            <div class="text-red-400 text-center p-4">
+                ❌ Unable to load system stats
+            </div>
+        `;
+    }
+}
+
+// Check for new achievements
+async function checkForNewAchievements(playerId) {
+    try {
+        // Get player name for notification
+        const playerResponse = await makeRequest(`${API_BASE}/players`);
+        const players = await playerResponse.json();
+        const player = players.find(p => p.id === playerId);
+        
+        if (player) {
+            // Simulate achievement unlock (in real app, this would come from the backend)
+            const achievements = [
+                { name: "Score Submitted!", icon: "🎯", description: "Successfully submitted a score" },
+                { name: "Getting Started", icon: "🚀", description: "Your gaming journey begins!" }
+            ];
+            
+            // Show random achievement notification
+            if (Math.random() > 0.7) { // 30% chance
+                const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
+                showAchievementNotification(player.display_name || player.username, randomAchievement);
+            }
+        }
+    } catch (error) {
+        console.error('Error checking achievements:', error);
+    }
+}
+
+// Show achievement notification
+function showAchievementNotification(playerName, achievement) {
+    const notification = document.createElement('div');
+    notification.className = 'achievement-unlock glass rounded-xl p-4 mb-2 border-l-4 border-yellow-400';
+    notification.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <div class="text-3xl">${achievement.icon}</div>
+            <div>
+                <div class="font-bold text-white text-sm">🏅 Achievement Unlocked!</div>
+                <div class="font-semibold text-yellow-400">${achievement.name}</div>
+                <div class="text-xs text-white/70">${playerName} • ${achievement.description}</div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('achievement-notifications').appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideInRight 0.5s ease-out reverse';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 5000);
+}
+
+// Show general notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    const bgColor = type === 'success' ? 'from-green-500 to-emerald-500' : 
+                   type === 'error' ? 'from-red-500 to-rose-500' : 
+                   'from-blue-500 to-indigo-500';
+    
+    notification.className = `achievement-unlock glass rounded-xl p-4 mb-2 bg-gradient-to-r ${bgColor}`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="text-white font-semibold text-sm">${message}</div>
+            <button onclick="this.parentNode.parentNode.remove()" class="text-white/80 hover:text-white ml-2">✕</button>
+        </div>
+    `;
+    
+    document.getElementById('achievement-notifications').appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideInRight 0.5s ease-out reverse';
             setTimeout(() => {
-                document.getElementById('error-message').classList.add('hidden');
-            }, 5000);
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
         }
+    }, 4000);
+}
 
-        function showLoading() {
-            document.getElementById('loading').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').classList.add('hidden');
-        }
-
-        function getRankIcon(rank) {
-            if (rank === 1) return '👑';
-            if (rank === 2) return '🥈';
-            if (rank === 3) return '🥉';
-            return `#${rank}`;
-        }
-
-        function getRankBg(rank) {
-            if (rank === 1) return 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/30';
-            if (rank === 2) return 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-400/30';
-            if (rank === 3) return 'bg-gradient-to-r from-amber-600/20 to-amber-700/20 border-amber-600/30';
-            return 'bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-600/30';
-        }
-
-        // API functions
-        async function fetchLeaderboard() {
-            showLoading();
-            try {
-                const endpoint = currentGameMode === 'GLOBAL' 
-                    ? `${API_BASE}/api/leaderboard/global?limit=10`
-                    : `${API_BASE}/api/leaderboard/gamemode/${currentGameMode}?limit=10`;
-                
-                const response = await fetch(endpoint);
-                if (!response.ok) throw new Error('Failed to fetch leaderboard');
-                const data = await response.json();
-                
-                displayLeaderboard(data);
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function fetchPlayers() {
-            showLoading();
-            try {
-                const response = await fetch(`${API_BASE}/api/players`);
-                if (!response.ok) throw new Error('Failed to fetch players');
-                players = await response.json();
-                
-                displayPlayers(players);
-                populatePlayerSelect();
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function createPlayer() {
-            const username = document.getElementById('player-username').value;
-            const email = document.getElementById('player-email').value;
-            const displayName = document.getElementById('player-display-name').value;
-
-            if (!username || !email) {
-                showError('Username and email are required');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/players`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username,
-                        email,
-                        display_name: displayName || username
-                    })
-                });
-
-                if (!response.ok) throw new Error('Failed to create player');
-
-                document.getElementById('add-player-modal').classList.add('hidden');
-                document.getElementById('player-username').value = '';
-                document.getElementById('player-email').value = '';
-                document.getElementById('player-display-name').value = '';
-                
-                fetchPlayers();
-            } catch (error) {
-                showError(error.message);
-            }
-        }
-
-        async function submitScore() {
-            const playerId = document.getElementById('score-player').value;
-            const gameMode = document.getElementById('score-game-mode').value;
-            const score = document.getElementById('score-value').value;
-
-            if (!playerId || !score) {
-                showError('Player and score are required');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/scores`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        player_id: parseInt(playerId),
-                        game_mode: gameMode,
-                        score: parseInt(score)
-                    })
-                });
-
-                if (!response.ok) throw new Error('Failed to submit score');
-
-                document.getElementById('add-score-modal').classList.add('hidden');
-                document.getElementById('score-player').value = '';
-                document.getElementById('score-value').value = '';
-                
-                if (currentTab === 'leaderboard') fetchLeaderboard();
-            } catch (error) {
-                showError(error.message);
-            }
-        }
-
-        // Display functions
-        function displayLeaderboard(leaderboard) {
-            const container = document.getElementById('leaderboard-list');
-            
-            if (leaderboard.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12">
-                        <div class="text-6xl mb-4">🎮</div>
-                        <p class="text-slate-400 text-lg">No scores yet. Be the first to play!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = leaderboard.map((entry, index) => `
-                <div class="${getRankBg(entry.rank)} border rounded-xl p-6 transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10" style="animation-delay: ${index * 100}ms;">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-slate-800/50 text-2xl">
-                                ${getRankIcon(entry.rank)}
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white">${entry.player_name}</h3>
-                                <p class="text-slate-400">Player #${entry.player_id}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-right">
-                            <div class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                                ${entry.best_score.toLocaleString()}
-                            </div>
-                            <p class="text-slate-400">points</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function displayPlayers(players) {
-            const container = document.getElementById('players-grid');
-            
-            if (players.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <div class="text-6xl mb-4">👥</div>
-                        <p class="text-slate-400 text-lg">No players registered yet.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = players.map((player, index) => `
-                <div class="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-slate-600/30 rounded-xl p-6 transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10" style="animation-delay: ${index * 100}ms;">
-                    <div class="flex items-center space-x-4 mb-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold text-lg">
-                                ${(player.display_name || player.username).charAt(0).toUpperCase()}
-                            </span>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white">${player.display_name || player.username}</h3>
-                            <p class="text-slate-400 text-sm">@${player.username}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center text-slate-400">
-                            <span class="mr-2">⭐</span>
-                            Player ID: ${player.id}
-                        </div>
-                        <div class="flex items-center text-slate-400">
-                            <span class="mr-2">📈</span>
-                            Joined: ${new Date(player.created_at).toLocaleDateString()}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function populatePlayerSelect() {
-            const select = document.getElementById('score-player');
-            select.innerHTML = '<option value="">Select a player</option>' + 
-                players.map(player => `
-                    <option value="${player.id}">
-                        ${player.display_name || player.username} (#${player.id})
-                    </option>
-                `).join('');
-        }
-
-        // Event listeners
-        document.getElementById('leaderboard-tab').addEventListener('click', () => {
-            currentTab = 'leaderboard';
-            document.getElementById('leaderboard-section').classList.remove('hidden');
-            document.getElementById('players-section').classList.add('hidden');
-            
-            // Update tab styles
-            document.getElementById('leaderboard-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25';
-            document.getElementById('players-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50';
-            
-            fetchLeaderboard();
-        });
-
-        document.getElementById('players-tab').addEventListener('click', () => {
-            currentTab = 'players';
-            document.getElementById('leaderboard-section').classList.add('hidden');
-            document.getElementById('players-section').classList.remove('hidden');
-            
-            // Update tab styles
-            document.getElementById('players-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25';
-            document.getElementById('leaderboard-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50';
-            
-            fetchPlayers();
-        });
-
-        document.getElementById('game-mode').addEventListener('change', (e) => {
-            currentGameMode = e.target.value;
-            fetchLeaderboard();
-        });
-
-        // Modal controls
-        document.getElementById('add-player-btn').addEventListener('click', () => {
-            document.getElementById('add-player-modal').classList.remove('hidden');
-        });
-
-        document.getElementById('add-score-btn').addEventListener('click', () => {
-            if (players.length === 0) {
-                showError('Please add players first before submitting scores');
-                return;
-            }
-            document.getElementById('add-score-modal').classList.remove('hidden');
-        });
-
-        document.getElementById('cancel-player-btn').addEventListener('click', () => {
-            document.getElementById('add-player-modal').classList.add('hidden');
-        });
-
-        document.getElementById('cancel-score-btn').addEventListener('click', () => {
-            document.getElementById('add-score-modal').classList.add('hidden');
-        });
-
-        document.getElementById('create-player-btn').addEventListener('click', createPlayer);
-        document.getElementById('submit-score-btn').addEventListener('click', submitScore);
-
-        // Initialize
-        fetchLeaderboard();
+// Update cache status indicator
+function updateCacheStatus(status) {
+    const cacheStatus = document.getElementById('cache-status');
+    if (cacheStatus) {
+        cacheStatus.textContent = status;
+        cacheStatus.style.animation = 'none';
+        cacheStatus.offsetHeight; // Trigger reflow
+        cacheStatus.style.animation = 'float 0.5s ease-in-out';
+    }
+}
     </script>
 </body>
 </html>
