@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: leaderboard-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: leaderboard_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - leaderboard-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  player-service:
+    build: 
+      context: ./player-service
+      dockerfile: Dockerfile
+    container_name: player-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: mysql+pymysql://root:password@mysql:3306/leaderboard_db
+      SERVICE_HOST: player-service
+      SERVICE_PORT: 8001
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - leaderboard-network
+
+  score-service:
+    build:
+      context: ./score-service
+      dockerfile: Dockerfile
+    container_name: score-service
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: mysql+pymysql://root:password@mysql:3306/leaderboard_db
+      SERVICE_HOST: score-service
+      SERVICE_PORT: 8002
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - leaderboard-network
+
+  leaderboard-service:
+    build:
+      context: ./leaderboard-service
+      dockerfile: Dockerfile
+    container_name: leaderboard-service
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: mysql+pymysql://root:password@mysql:3306/leaderboard_db
+      SERVICE_HOST: leaderboard-service
+      SERVICE_PORT: 8003
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - leaderboard-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - player-service
+      - score-service
+      - leaderboard-service
+    networks:
+      - leaderboard-network
+
+volumes:
+  mysql_data:
+
+networks:
+  leaderboard-network:
+    driver: bridge

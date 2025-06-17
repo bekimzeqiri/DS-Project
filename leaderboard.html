@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming Leaderboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        .float-animation { animation: float 6s ease-in-out infinite; }
+        .glow { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        body { overflow-x: hidden; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl float-animation"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl float-animation" style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl float-animation" style="animation-delay: 4s;"></div>
+    </div>
+
+    <div class="relative z-10">
+        <!-- Header -->
+        <header class="bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-gradient-to-r from-purple-500 to-cyan-500 p-3 rounded-xl">
+                            <span class="text-2xl">🏆</span>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                                Gaming Leaderboard
+                            </h1>
+                            <p class="text-slate-400">Track your gaming achievements</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="flex bg-slate-800/80 rounded-lg p-1">
+                            <button id="leaderboard-tab" class="tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25">
+                                🏆 Leaderboard
+                            </button>
+                            <button id="players-tab" class="tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50">
+                                👥 Players
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Error Message -->
+            <div id="error-message" class="hidden mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <p class="text-red-400" id="error-text"></p>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading" class="hidden flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div id="leaderboard-section" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-2xl font-bold">🏆 Leaderboard</h2>
+                        <select id="game-mode" class="bg-slate-800/80 border border-slate-600/50 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="GLOBAL">🌍 Global</option>
+                            <option value="CLASSIC">🎮 Classic</option>
+                            <option value="ARCADE">🕹️ Arcade</option>
+                        </select>
+                    </div>
+                    
+                    <button id="add-score-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 glow">
+                        ➕ Submit Score
+                    </button>
+                </div>
+
+                <div id="leaderboard-list" class="space-y-3">
+                    <!-- Leaderboard entries will be populated here -->
+                </div>
+            </div>
+
+            <!-- Players Section -->
+            <div id="players-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold">👥 Players</h2>
+                    <button id="add-player-btn" class="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-4 py-2 rounded-lg font-medium transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 glow">
+                        ➕ Add Player
+                    </button>
+                </div>
+
+                <div id="players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Players will be populated here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div id="add-player-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-700">
+            <h3 class="text-xl font-bold mb-4">Add New Player</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                    <input type="text" id="player-username" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                    <input type="email" id="player-email" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Display Name</label>
+                    <input type="text" id="player-display-name" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button id="create-player-btn" class="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 py-2 rounded-lg font-medium transition-all duration-300">
+                        Create Player
+                    </button>
+                    <button id="cancel-player-btn" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg font-medium transition-all duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Score Modal -->
+    <div id="add-score-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-700">
+            <h3 class="text-xl font-bold mb-4">Submit Score</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Player</label>
+                    <select id="score-player" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required>
+                        <option value="">Select a player</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Game Mode</label>
+                    <select id="score-game-mode" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="CLASSIC">🎮 Classic</option>
+                        <option value="ARCADE">🕹️ Arcade</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Score</label>
+                    <input type="number" id="score-value" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" required min="0">
+                </div>
+                <div class="flex space-x-3 pt-4">
+                    <button id="submit-score-btn" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 py-2 rounded-lg font-medium transition-all duration-300">
+                        Submit Score
+                    </button>
+                    <button id="cancel-score-btn" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg font-medium transition-all duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let currentTab = 'leaderboard';
+        let currentGameMode = 'GLOBAL';
+        let players = [];
+
+        // Utility functions
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-message').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('error-message').classList.add('hidden');
+            }, 5000);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function getRankIcon(rank) {
+            if (rank === 1) return '👑';
+            if (rank === 2) return '🥈';
+            if (rank === 3) return '🥉';
+            return `#${rank}`;
+        }
+
+        function getRankBg(rank) {
+            if (rank === 1) return 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/30';
+            if (rank === 2) return 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-400/30';
+            if (rank === 3) return 'bg-gradient-to-r from-amber-600/20 to-amber-700/20 border-amber-600/30';
+            return 'bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-600/30';
+        }
+
+        // API functions
+        async function fetchLeaderboard() {
+            showLoading();
+            try {
+                const endpoint = currentGameMode === 'GLOBAL' 
+                    ? `${API_BASE}/api/leaderboard/global?limit=10`
+                    : `${API_BASE}/api/leaderboard/gamemode/${currentGameMode}?limit=10`;
+                
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error('Failed to fetch leaderboard');
+                const data = await response.json();
+                
+                displayLeaderboard(data);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function fetchPlayers() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/api/players`);
+                if (!response.ok) throw new Error('Failed to fetch players');
+                players = await response.json();
+                
+                displayPlayers(players);
+                populatePlayerSelect();
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createPlayer() {
+            const username = document.getElementById('player-username').value;
+            const email = document.getElementById('player-email').value;
+            const displayName = document.getElementById('player-display-name').value;
+
+            if (!username || !email) {
+                showError('Username and email are required');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/players`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        display_name: displayName || username
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to create player');
+
+                document.getElementById('add-player-modal').classList.add('hidden');
+                document.getElementById('player-username').value = '';
+                document.getElementById('player-email').value = '';
+                document.getElementById('player-display-name').value = '';
+                
+                fetchPlayers();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function submitScore() {
+            const playerId = document.getElementById('score-player').value;
+            const gameMode = document.getElementById('score-game-mode').value;
+            const score = document.getElementById('score-value').value;
+
+            if (!playerId || !score) {
+                showError('Player and score are required');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/scores`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        player_id: parseInt(playerId),
+                        game_mode: gameMode,
+                        score: parseInt(score)
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to submit score');
+
+                document.getElementById('add-score-modal').classList.add('hidden');
+                document.getElementById('score-player').value = '';
+                document.getElementById('score-value').value = '';
+                
+                if (currentTab === 'leaderboard') fetchLeaderboard();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Display functions
+        function displayLeaderboard(leaderboard) {
+            const container = document.getElementById('leaderboard-list');
+            
+            if (leaderboard.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">🎮</div>
+                        <p class="text-slate-400 text-lg">No scores yet. Be the first to play!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = leaderboard.map((entry, index) => `
+                <div class="${getRankBg(entry.rank)} border rounded-xl p-6 transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10" style="animation-delay: ${index * 100}ms;">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-slate-800/50 text-2xl">
+                                ${getRankIcon(entry.rank)}
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${entry.player_name}</h3>
+                                <p class="text-slate-400">Player #${entry.player_id}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                                ${entry.best_score.toLocaleString()}
+                            </div>
+                            <p class="text-slate-400">points</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayPlayers(players) {
+            const container = document.getElementById('players-grid');
+            
+            if (players.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <div class="text-6xl mb-4">👥</div>
+                        <p class="text-slate-400 text-lg">No players registered yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = players.map((player, index) => `
+                <div class="bg-gradient-to-br from-slate-800/50 to-slate-700/50 border border-slate-600/30 rounded-xl p-6 transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10" style="animation-delay: ${index * 100}ms;">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold text-lg">
+                                ${(player.display_name || player.username).charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white">${player.display_name || player.username}</h3>
+                            <p class="text-slate-400 text-sm">@${player.username}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center text-slate-400">
+                            <span class="mr-2">⭐</span>
+                            Player ID: ${player.id}
+                        </div>
+                        <div class="flex items-center text-slate-400">
+                            <span class="mr-2">📈</span>
+                            Joined: ${new Date(player.created_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populatePlayerSelect() {
+            const select = document.getElementById('score-player');
+            select.innerHTML = '<option value="">Select a player</option>' + 
+                players.map(player => `
+                    <option value="${player.id}">
+                        ${player.display_name || player.username} (#${player.id})
+                    </option>
+                `).join('');
+        }
+
+        // Event listeners
+        document.getElementById('leaderboard-tab').addEventListener('click', () => {
+            currentTab = 'leaderboard';
+            document.getElementById('leaderboard-section').classList.remove('hidden');
+            document.getElementById('players-section').classList.add('hidden');
+            
+            // Update tab styles
+            document.getElementById('leaderboard-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25';
+            document.getElementById('players-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50';
+            
+            fetchLeaderboard();
+        });
+
+        document.getElementById('players-tab').addEventListener('click', () => {
+            currentTab = 'players';
+            document.getElementById('leaderboard-section').classList.add('hidden');
+            document.getElementById('players-section').classList.remove('hidden');
+            
+            // Update tab styles
+            document.getElementById('players-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 bg-purple-600 text-white shadow-lg shadow-purple-600/25';
+            document.getElementById('leaderboard-tab').className = 'tab-btn px-4 py-2 rounded-md font-medium transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-700/50';
+            
+            fetchPlayers();
+        });
+
+        document.getElementById('game-mode').addEventListener('change', (e) => {
+            currentGameMode = e.target.value;
+            fetchLeaderboard();
+        });
+
+        // Modal controls
+        document.getElementById('add-player-btn').addEventListener('click', () => {
+            document.getElementById('add-player-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('add-score-btn').addEventListener('click', () => {
+            if (players.length === 0) {
+                showError('Please add players first before submitting scores');
+                return;
+            }
+            document.getElementById('add-score-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-player-btn').addEventListener('click', () => {
+            document.getElementById('add-player-modal').classList.add('hidden');
+        });
+
+        document.getElementById('cancel-score-btn').addEventListener('click', () => {
+            document.getElementById('add-score-modal').classList.add('hidden');
+        });
+
+        document.getElementById('create-player-btn').addEventListener('click', createPlayer);
+        document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+
+        // Initialize
+        fetchLeaderboard();
+    </script>
+</body>
+</html>
